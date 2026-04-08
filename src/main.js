@@ -253,6 +253,9 @@ class GameScene extends Phaser.Scene {
     fountain.body.setOffset(4, 4);
     fountain.anims.play("fountain_anim", true);
 
+    // --- PORTAL MÁGICO (Enlace a Web Principal) ---
+    this.createPortal(worldSize.width / 2 - 250 + 180, worldSize.height / 2 - 300);
+
     // --- ANIMACIONES DEL JUGADOR ---
     // 4 direcciones de caminata, cada una con 4 frames a 8fps en bucle
     this.anims.create({
@@ -2198,6 +2201,112 @@ class GameScene extends Phaser.Scene {
    * Crea la casa en la parte superior del mapa.
    * Tiene una zona de puerta invisible que redirige a la página "Sobre mí" con un fade to black.
    */
+  // ═══════════════════════════════════════════════════════
+  // PORTAL MÁGICO (Enlace a Portfolio Principal)
+  // ═══════════════════════════════════════════════════════
+  createPortal(x, y) {
+    // Generar textura del portal si no existe
+    if (!this.textures.exists("portal-tex")) {
+      const g = this.make.graphics({ x: 0, y: 0, add: false });
+      // Anillo exterior
+      g.lineStyle(4, 0x8e44ff, 1);
+      g.strokeCircle(32, 32, 28);
+      g.lineStyle(3, 0x3498db, 0.7);
+      g.strokeCircle(32, 32, 22);
+      // Centro brillante
+      g.fillStyle(0x6c3bff, 0.6);
+      g.fillCircle(32, 32, 18);
+      g.fillStyle(0xaaffff, 0.4);
+      g.fillCircle(32, 32, 10);
+      g.generateTexture("portal-tex", 64, 64);
+    }
+
+    // Sprite del portal
+    const portal = this.add.sprite(x, y, "portal-tex").setScale(2.5).setDepth(1);
+
+    // Animación de rotación y pulso constante
+    this.tweens.add({
+      targets: portal,
+      angle: 360,
+      duration: 4000,
+      repeat: -1,
+      ease: 'Linear'
+    });
+
+    this.tweens.add({
+      targets: portal,
+      scale: { from: 2.3, to: 2.7 },
+      alpha: { from: 0.75, to: 1 },
+      duration: 1500,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Partículas flotantes alrededor del portal
+    if (!this.textures.exists("portal-particle")) {
+      const p = this.make.graphics({ x: 0, y: 0, add: false });
+      p.fillStyle(0xaaffff, 1);
+      p.fillCircle(4, 4, 4);
+      p.generateTexture("portal-particle", 8, 8);
+    }
+
+    const particles = this.add.particles(x, y, "portal-particle", {
+      speed: { min: 20, max: 60 },
+      scale: { start: 0.8, end: 0 },
+      alpha: { start: 0.8, end: 0 },
+      lifespan: 1200,
+      frequency: 120,
+      blendMode: 'ADD',
+      emitZone: {
+        type: 'edge',
+        source: new Phaser.Geom.Circle(0, 0, 50),
+        quantity: 12
+      }
+    }).setDepth(1);
+
+    // Cartel debajo
+    const label = this.add.text(x, y + 50, "🌀 Mi Web", {
+      font: 'bold 14px "MedievalSharp"',
+      fill: '#aaffff',
+      stroke: '#000000',
+      strokeThickness: 3
+    }).setOrigin(0.5).setDepth(5);
+
+    this.tweens.add({
+      targets: label,
+      y: y + 45,
+      duration: 1200,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Zona de interacción
+    const portalZone = this.add.zone(x, y, 70, 70);
+    this.physics.world.enable(portalZone);
+    portalZone.body.setAllowGravity(false);
+    portalZone.body.setImmovable(true);
+
+    this.physics.add.overlap(this.player, portalZone, () => {
+      if (this.portalActivated) return;
+      this.portalActivated = true;
+
+      // Flash blanco y abrir enlace
+      this.cameras.main.flash(800, 255, 255, 255);
+      this.cameras.main.fadeOut(1000, 255, 255, 255);
+
+      this.time.delayedCall(500, () => {
+        window.open("https://mainportfolio-one.vercel.app/", "_blank");
+      });
+
+      this.time.delayedCall(1200, () => {
+        this.cameras.main.fadeIn(800, 0, 0, 0);
+        this.portalActivated = false;
+      });
+    });
+  }
+
   createHouse() {
     const houseX = worldSize.width / 2 + 220, houseY = 130;
 
