@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel RPG Welcome UI – Phaser 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #game-container canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+</style>
+</head>
+<body>
+<div id="game-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.60.0/phaser.min.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+//  PALETA "Nostalgia BIOS / Ayzande 16"
+// ─────────────────────────────────────────────────────────────────────────────
+const PAL = {
+  oakDark:    0x3d251e,
+  oakMid:     0x5c3a2e,
+  oakLight:   0x7a4f3f,
+  cream:      0xe8dcac,
+  creamDim:   0xc4b48c,
+  midnight:   0x0b0f2a,
+  deepBlue:   0x111a3d,
+  gold:       0xf5c842,
+  goldDim:    0xb8912e,
+  white:      0xffffff,
+  red:        0xc93c20,
+  green:      0x3da35d,
+  scanLine:   0x000000,
+};
+
+// hex → CSS string
+const hex = n => '#' + n.toString(16).padStart(6, '0');
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  SCENE: WelcomePopup
+// ─────────────────────────────────────────────────────────────────────────────
+class WelcomePopup extends Phaser.Scene {
+  constructor() { super({ key: 'WelcomePopup' }); }
+
+  // ── PRELOAD ──────────────────────────────────────────────────────────────
+  preload() {
+    // All graphics are procedurally generated – no external assets needed.
+  }
+
+  // ── CREATE ───────────────────────────────────────────────────────────────
+  create() {
+    const W = this.scale.width;
+    const H = this.scale.height;
+
+    // ── 1. WORLD BACKGROUND ─────────────────────────────────────────────
+    this._buildWorldBG(W, H);
+
+    // ── 2. POPUP CONTAINER (parented so we can tween it as one unit) ─────
+    this.popup = this.add.container(W / 2, -300).setScrollFactor(0);
+
+    const PW = 480, PH = 340;
+
+    // Panel shadow
+    const shadow = this.add.graphics();
+    shadow.fillStyle(0x000000, 0.55);
+    this._roundRect(shadow, 8, 8, PW, PH, 4);
+    this.popup.add(shadow);
+
+    // Panel body
+    const panel = this.add.graphics();
+    this._drawPanel(panel, 0, 0, PW, PH);
+    this.popup.add(panel);
+
+    // Scanlines overlay
+    const scan = this._buildScanlines(PW, PH);
+    this.popup.add(scan);
+
+    // ── 3. TITLE ─────────────────────────────────────────────────────────
+    const titleShadow = this.add.text(PW / 2 + 2, 42, '⚔  BIENVENIDO  ⚔', {
+      fontFamily: '"Press Start 2P"',
+      fontSize: '13px',
+      color: hex(PAL.oakDark),
+      resolution: 2,
+    }).setOrigin(0.5, 0.5);
+
+    const title = this.add.text(PW / 2, 40, '⚔  BIENVENIDO  ⚔', {
+      fontFamily: '"Press Start 2P"',
+      fontSize: '13px',
+      color: hex(PAL.gold),
+      resolution: 2,
+    }).setOrigin(0.5, 0.5);
+
+    this.popup.add(titleShadow);
+    this.popup.add(title);
+
+    // Sub-divider line
+    const divider = this.add.graphics();
+    divider.lineStyle(2, PAL.oakLight, 1);
+    divider.lineBetween(20, 60, PW - 20, 60);
+    this.popup.add(divider);
+
+    // ── 4. TYPEWRITER TEXT ───────────────────────────────────────────────
+    this._twTarget = '';
+    this._twIndex  = 0;
+    this._twTimer  = null;
+
+    const bodyLines = [
+      'Héroe, el reino de Pixeloria',
+      'te necesita. Tu leyenda está',
+      'por comenzar...',
+      '',
+      'Que la suerte esté contigo.',
+    ];
+    const fullText = bodyLines.join('\n');
+
+    this.bodyText = this.add.text(PW / 2, 140, '', {
+      fontFamily: '"Press Start 2P"',
+      fontSize: '8px',
+      color: hex(PAL.cream),
+      lineSpacing: 10,
+      align: 'center',
+      resolution: 2,
+      wordWrap: { width: PW - 60 },
+    }).setOrigin(0.5, 0.5);
+    this.popup.add(this.bodyText);
+
+    // ── 5. ADVENTURE BUTTON (Sword style) ────────────────────────────────
+    this.btnContainer = this.add.container(PW / 2, 270);
+    this._buildSwordButton(this.btnContainer);
+    this.popup.add(this.btnContainer);
+
+    // ── 6. PARTICLE EMITTER (for click burst) ────────────────────────────
+    this._buildParticles(W, H);
+
+    // ── 7. ENTRY ANIMATION: Slide-in & Bounce ────────────────────────────
+    this.tweens.add({
+      targets: this.popup,
+      y: H / 2,
+      ease: 'Bounce.Out',
+      duration: 900,
+      delay: 200,
+      onComplete: () => this._startTypewriter(fullText),
+    });
+
+    // ── 8. IDLE FLOAT ANIMATION on button ────────────────────────────────
+    this.tweens.add({
+      targets: this.btnContainer,
+      y: '+=3',
+      yoyo: true,
+      repeat: -1,
+      duration: 600,
+      ease: 'Sine.InOut',
+    });
+
+    // ── 9. TITLE SHIMMER ─────────────────────────────────────────────────
+    this.tweens.add({
+      targets: title,
+      alpha: 0.6,
+      yoyo: true,
+      repeat: -1,
+      duration: 1200,
+      ease: 'Sine.InOut',
+    });
+  }
+
+  // ── HELPERS ──────────────────────────────────────────────────────────────
+
+  /** World background: star field + pixel tiles */
+  _buildWorldBG(W, H) {
+    const bg = this.add.graphics().setScrollFactor(0);
+    bg.fillStyle(PAL.midnight, 1);
+    bg.fillRect(0, 0, W, H);
+
+    // Pixel stars
+    const rng = Phaser.Math.RND;
+    for (let i = 0; i < 120; i++) {
+      const x = rng.between(0, W);
+      const y = rng.between(0, H);
+      const bright = rng.pick([0xffffff, 0xe8dcac, 0x8888cc]);
+      bg.fillStyle(bright, rng.frac() * 0.8 + 0.2);
+      bg.fillRect(x, y, 1, 1);
+    }
+
+    // Subtle grid
+    bg.lineStyle(1, 0x1a2040, 0.4);
+    for (let x = 0; x < W; x += 16) bg.lineBetween(x, 0, x, H);
+    for (let y = 0; y < H; y += 16) bg.lineBetween(0, y, W, y);
+  }
+
+  /** Nine-slice-like panel drawn with pixel-art bevel */
+  _drawPanel(g, x, y, w, h) {
+    const BORDER = 4;
+
+    // Background fill
+    g.fillStyle(PAL.midnight, 0.94);
+    g.fillRect(x, y, w, h);
+
+    // Outer border – oak dark
+    g.lineStyle(BORDER, PAL.oakDark, 1);
+    g.strokeRect(x, y, w, h);
+
+    // Inner bevel – highlight (top-left)
+    g.lineStyle(2, PAL.cream, 0.45);
+    g.lineBetween(x + BORDER, y + BORDER, x + w - BORDER, y + BORDER);       // top
+    g.lineBetween(x + BORDER, y + BORDER, x + BORDER, y + h - BORDER);       // left
+
+    // Inner bevel – shadow (bottom-right)
+    g.lineStyle(2, PAL.oakDark, 0.8);
+    g.lineBetween(x + w - BORDER, y + BORDER, x + w - BORDER, y + h - BORDER); // right
+    g.lineBetween(x + BORDER, y + h - BORDER, x + w - BORDER, y + h - BORDER); // bottom
+
+    // Corner notch pixels (classic pixel-art rounded feel)
+    g.fillStyle(PAL.oakMid, 1);
+    [[0,0],[w-4,0],[0,h-4],[w-4,h-4]].forEach(([cx, cy]) => {
+      g.fillRect(x + cx, y + cy, 4, 4);
+    });
+
+    // Decorative inner top stripe
+    g.fillStyle(PAL.deepBlue, 0.6);
+    g.fillRect(x + BORDER + 2, y + BORDER + 2, w - (BORDER + 2) * 2, 24);
+
+    // Gold accent line under top stripe
+    g.fillStyle(PAL.gold, 0.9);
+    g.fillRect(x + BORDER + 2, y + BORDER + 26, w - (BORDER + 2) * 2, 2);
+  }
+
+  /** Scanlines CRT overlay */
+  _buildScanlines(w, h) {
+    const g = this.add.graphics();
+    g.lineStyle(1, PAL.scanLine, 0.12);
+    for (let y = 0; y < h; y += 2) {
+      g.lineBetween(0, y, w, y);
+    }
+    return g;
+  }
+
+  /** Sword-shaped button */
+  _buildSwordButton(container) {
+    const BW = 200, BH = 36;
+
+    // Button shadow
+    this.btnShadow = this.add.graphics();
+    this.btnShadow.fillStyle(0x000000, 0.5);
+    this._roundRect(this.btnShadow, -BW/2 + 3, -BH/2 + 3, BW, BH, 3);
+
+    // Button body
+    this.btnBody = this.add.graphics();
+    this._drawButton(this.btnBody, BW, BH, false);
+
+    // Button label shadow
+    const lblShadow = this.add.text(2, 2, '¡A LA AVENTURA!', {
+      fontFamily: '"Press Start 2P"',
+      fontSize: '8px',
+      color: hex(PAL.oakDark),
+      resolution: 2,
+    }).setOrigin(0.5, 0.5);
+
+    // Button label
+    this.btnLabel = this.add.text(0, 0, '¡A LA AVENTURA!', {
+      fontFamily: '"Press Start 2P"',
+      fontSize: '8px',
+      color: hex(PAL.cream),
+      resolution: 2,
+    }).setOrigin(0.5, 0.5);
+
+    // Sword left ornament
+    const swordL = this.add.text(-BW/2 - 14, 0, '🗡', {
+      fontSize: '16px',
+    }).setOrigin(0.5, 0.5);
+
+    const swordR = this.add.text(BW/2 + 14, 0, '🗡', {
+      fontSize: '16px',
+    }).setOrigin(0.5, 0.5).setFlipX(true);
+
+    container.add([this.btnShadow, this.btnBody, lblShadow, this.btnLabel, swordL, swordR]);
+
+    // ── Hit zone ──
+    const hitZone = this.add.zone(-BW/2, -BH/2, BW, BH)
+      .setInteractive({ useHandCursor: true });
+    container.add(hitZone);
+
+    hitZone.on('pointerover', () => {
+      this._drawButton(this.btnBody, BW, BH, true);
+      this.btnLabel.setColor(hex(PAL.white));
+    });
+
+    hitZone.on('pointerout', () => {
+      this._drawButton(this.btnBody, BW, BH, false);
+      this.btnLabel.setColor(hex(PAL.cream));
+    });
+
+    hitZone.on('pointerdown', () => {
+      // Squash & Stretch
+      this.tweens.add({
+        targets: container,
+        scaleX: 0.9,
+        scaleY: 0.9,
+        duration: 80,
+        yoyo: true,
+        ease: 'Quad.In',
+        onComplete: () => this._onAdventureClick(),
+      });
+    });
+  }
+
+  /** Draw the button graphics (normal / hover) */
+  _drawButton(g, bw, bh, hover) {
+    g.clear();
+    const fillColor = hover ? PAL.goldDim : PAL.oakMid;
+    const borderColor = hover ? PAL.white : PAL.gold;
+
+    g.fillStyle(fillColor, 1);
+    this._roundRect(g, -bw/2, -bh/2, bw, bh, 3);
+
+    g.lineStyle(2, borderColor, 1);
+    g.strokeRect(-bw/2, -bh/2, bw, bh);
+
+    // Pixel bevel (top-left lighter)
+    g.lineStyle(1, hover ? 0xffffff : PAL.cream, 0.4);
+    g.lineBetween(-bw/2+2, -bh/2+2, bw/2-2, -bh/2+2);
+    g.lineBetween(-bw/2+2, -bh/2+2, -bw/2+2, bh/2-2);
+  }
+
+  /** Particle emitter for click burst */
+  _buildParticles(W, H) {
+    // Create a small square texture for particles
+    const gfx = this.make.graphics({ x: 0, y: 0, add: false });
+    gfx.fillStyle(0xffffff, 1);
+    gfx.fillRect(0, 0, 4, 4);
+    gfx.generateTexture('pixel', 4, 4);
+    gfx.destroy();
+
+    this.burstEmitter = this.add.particles(0, 0, 'pixel', {
+      speed: { min: 80, max: 200 },
+      angle: { min: 0, max: 360 },
+      scale: { start: 1, end: 0 },
+      lifespan: { min: 300, max: 600 },
+      quantity: 0,
+      tint: [PAL.gold, PAL.cream, PAL.white, PAL.green],
+    });
+    this.burstEmitter.setScrollFactor(0);
+  }
+
+  /** Typewriter effect */
+  _startTypewriter(text) {
+    this._twTarget = text;
+    this._twIndex  = 0;
+    this._twTimer  = this.time.addEvent({
+      delay: 30,
+      callback: this._twTick,
+      callbackScope: this,
+      loop: true,
+    });
+  }
+
+  _twTick() {
+    if (this._twIndex >= this._twTarget.length) {
+      this._twTimer.remove();
+      return;
+    }
+    this._twIndex++;
+    this.bodyText.setText(this._twTarget.slice(0, this._twIndex));
+  }
+
+  /** Adventure button clicked */
+  _onAdventureClick() {
+    // Burst particles at button world position
+    const worldPos = this.btnContainer.getWorldTransformMatrix();
+    const bx = this.popup.x + this.btnContainer.x;
+    const by = this.popup.y + this.btnContainer.y;
+    this.burstEmitter.setPosition(bx, by);
+    this.burstEmitter.explode(30);
+
+    // Flash the panel white briefly
+    this.cameras.main.flash(200, 255, 255, 255, false);
+
+    // Slide out popup upward
+    this.tweens.add({
+      targets: this.popup,
+      y: -400,
+      ease: 'Back.In',
+      duration: 600,
+      delay: 150,
+      onComplete: () => this._showVictoryText(),
+    });
+  }
+
+  /** Victory screen after dismissal */
+  _showVictoryText() {
+    const W = this.scale.width;
+    const H = this.scale.height;
+
+    const vt = this.add.text(W/2, H/2, '¡QUE COMIENCE\nLA AVENTURA!', {
+      fontFamily: '"Press Start 2P"',
+      fontSize: '18px',
+      color: hex(PAL.gold),
+      align: 'center',
+      lineSpacing: 14,
+      resolution: 2,
+    }).setOrigin(0.5, 0.5).setAlpha(0).setScrollFactor(0);
+
+    this.tweens.add({
+      targets: vt,
+      alpha: 1,
+      scaleX: { from: 0.5, to: 1 },
+      scaleY: { from: 0.5, to: 1 },
+      ease: 'Back.Out',
+      duration: 700,
+    });
+
+    this.tweens.add({
+      targets: vt,
+      alpha: 0,
+      delay: 2200,
+      duration: 600,
+      onComplete: () => {
+        vt.destroy();
+        this._respawnPopup();
+      },
+    });
+  }
+
+  /** Respawn popup so the demo loops */
+  _respawnPopup() {
+    this.popup.y = -300;
+    this.bodyText.setText('');
+    this.tweens.add({
+      targets: this.popup,
+      y: this.scale.height / 2,
+      ease: 'Bounce.Out',
+      duration: 900,
+      delay: 400,
+      onComplete: () => {
+        const bodyLines = [
+          'Héroe, el reino de Pixeloria',
+          'te necesita. Tu leyenda está',
+          'por comenzar...',
+          '',
+          'Que la suerte esté contigo.',
+        ];
+        this._startTypewriter(bodyLines.join('\n'));
+      },
+    });
+  }
+
+  /** Utility: filled rounded rect via graphics */
+  _roundRect(g, x, y, w, h, r) {
+    g.fillRoundedRect(x, y, w, h, r);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  PHASER CONFIG
+// ─────────────────────────────────────────────────────────────────────────────
+const config = {
+  type: Phaser.AUTO,
+  width: 640,
+  height: 480,
+  backgroundColor: '#0b0f2a',
+  antialias: false,          // ← pixel-perfect rendering
+  pixelArt: true,
+  parent: 'game-container',
+  scene: [WelcomePopup],
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+  },
+};
+
+const game = new Phaser.Game(config);
+</script>
+</body>
+</html>

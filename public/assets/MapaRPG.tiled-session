@@ -1,0 +1,28 @@
+{
+    "activeFile": "",
+    "expandedProjectPaths": [
+    ],
+    "fileStates": {
+        ":/automap-tiles.tsx": {
+            "scaleInDock": 1
+        },
+        "patrones.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1.9822
+        }
+    },
+    "last.imagePath": "/Users/manu/Desktop/Copia/pixel_16_woods v2 free",
+    "map.tileHeight": 50,
+    "map.tileWidth": 50,
+    "openFiles": [
+    ],
+    "project": "MapaRPG.tiled-project",
+    "recentFiles": [
+        "patrones.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 50,
+        "width": 50
+    }
+}

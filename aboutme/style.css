@@ -1,0 +1,255 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  height: 100vh;
+  width: 100%;
+  background-image: linear-gradient(-70deg, #1a0f3e 53%, #6457c6 100%);
+  height: 100vh;
+  color: #919191;
+  font-family: "Space Mono", monospace;
+  font-size: 16px;
+}
+
+#timedate {
+  visibility: hidden;
+}
+
+main {
+  height: 90vh;
+  display: flex;
+}
+
+.main {
+  display: flex;
+  justify-content: flex-start;
+  flex-direction: column;
+  align-items: left;
+  border-left: 2px dotted #00ffff;
+  padding-left: 60px;
+}
+
+.hero {
+  margin-top: 153px;
+}
+
+h1 {
+  color: #00ffff;
+  padding-top: 30px;
+  letter-spacing: 1px;
+  font-size: 5vw;
+  transition: transform 0.7s ease;
+}
+
+h2 {
+  color: #00ffff;
+  padding-top: 10px;
+  letter-spacing: 5px;
+  font-size: 2vw;
+  transition: transform 0.7s ease;
+}
+
+h1:hover {
+  color: #ff0099;
+  transform: scale(1.05);
+}
+
+h2:hover {
+  color: #ff0099;
+  transform: scale(1.02);
+}
+
+.button {
+  width: 200px;
+  text-align: center;
+  font-size: 1.8vw;
+  padding: 7px 12px;
+  margin-top: 40px;
+  border-radius: 6px;
+  border: 1px solid #00ffff;
+  transition: transform 0.7s ease;
+}
+
+.button:hover {
+  transform: scale(1.2);
+}
+
+aside {
+  width: 10%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+p {
+  color: #00ffff;
+  text-align: center;
+  padding: 20px;
+  font-size: 0.7em;
+}
+
+i {
+  color: #e5e1e1;
+  margin: 15px;
+  transition: transform 0.7s ease;
+  font-size: 26px;
+}
+
+i:hover {
+  -ms-transform: scale(1.6);
+  -webkit-transform: scale(1.6);
+  transform: scale(1.6);
+  color: #00ffff;
+}
+
+a {
+  text-decoration: none;
+  color: #00ffff;
+}
+
+a:hover {
+  color: #ff0099;
+}
+
+#timedate {
+  text-align: left;
+  color: #00ffff;
+  padding-top: 30px;
+}
+
+.background {
+  position: absolute;
+  height: 100vh;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: -1;
+}
+
+.intro-text {
+  color: #e5e1e1;
+  font-size: 1.2vw;
+  margin-top: 20px;
+  max-width: 600px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+@media screen and (max-width: 576px) {
+  .intro-text {
+    font-size: 4vw;
+  }
+}
+
+@media screen and (max-width: 576px) {
+  h1 {
+    font-size: 10vw;
+  }
+
+  h2 {
+    font-size: 5vw;
+  }
+
+  .button {
+    font-size: 3vw;
+    width: 180px;
+  }
+
+  .intro-text {
+    font-size: 4vw;
+  }
+}
+
+.profile-image {
+  width: 200px;  /* Reduced from 180px */
+  height: 200px; /* Reduced from 180px */
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #00ffff;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+  transition: transform 0.7s ease, border-color 0.7s ease;
+}
+
+/* Adjust spacing in the container */
+.profile-container {
+  display: flex;
+  align-items: center;
+  gap: 30px; /* Reduced from 40px */
+}
+
+/* Make responsive adjustments for mobile */
+@media screen and (max-width: 768px) {
+  .main {
+    border-left: none; /* Remove the dotted border on mobile */
+    padding-left: 0; /* Remove the left padding on mobile */
+    align-items: center; /* Center content horizontally */
+    width: 100%; /* Ensure full width */
+  }
+
+  main {
+    flex-direction: column-reverse;
+  }
+
+  aside {
+    flex-direction: row;
+    justify-content: center;
+    width: 100%; /* Full width for the aside section */
+    margin-top: 20px;
+  }
+  
+  .profile-container {
+    flex-direction: column; /* Stack elements vertically */
+    gap: 20px;
+    text-align: center; /* Center text below the image */
+    align-items: center; /* Center image horizontally */
+  }
+  
+  .profile-image {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 10px;
+  }
+  
+  .profile-text {
+    align-items: center;
+  }
+  
+  /* Center text elements on mobile */
+  .profile-text h1, 
+  .profile-text h2,
+  .profile-text .intro-text {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  /* Adjust hero margin for better spacing */
+  .hero {
+    margin-top: 100px;
+  }
+  
+  /* Adjust the time display to be centered as well */
+  #timedate {
+    text-align: center;
+  }
+
+  h2 {
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-top: 10px;
+  }
+}
+
+
+/* For very small screens */
+@media screen and (max-width: 480px) {
+  .profile-image {
+    width: 80px;
+    height: 80px;
+  }
+}

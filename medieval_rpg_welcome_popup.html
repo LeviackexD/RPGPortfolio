@@ -1,0 +1,484 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  :root {
+    --oak: #2e1a0e;
+    --oak2: #4a2c16;
+    --oak3: #7a4f2e;
+    --parchment: #f0dfa0;
+    --parch2: #c9a84c;
+    --gold: #e8b84b;
+    --gold2: #fff0a0;
+    --cream: #fdf5d8;
+    --ink: #1a0f05;
+    --dim: #6b4a2a;
+    --blood: #7a1a1a;
+    --emerald: #1a5c2e;
+    --sky: #1a2a4a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; image-rendering: pixelated; }
+
+  .rpg-overlay {
+    min-height: 520px;
+    background: var(--sky);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  /* Pixel star field */
+  .stars {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+
+  /* The popup window */
+  .rpg-popup {
+    position: relative;
+    width: 440px;
+    animation: popDrop 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes popDrop {
+    from { transform: translateY(-60px) scale(0.92); opacity: 0; }
+    to   { transform: translateY(0)     scale(1);    opacity: 1; }
+  }
+
+  /* Outer frame — pixel border technique */
+  .frame-outer {
+    background: var(--oak);
+    padding: 4px;
+    position: relative;
+    box-shadow:
+      4px 4px 0 var(--ink),
+      -1px -1px 0 var(--oak3);
+  }
+
+  .frame-inner {
+    background: var(--oak2);
+    padding: 3px;
+  }
+
+  .frame-body {
+    background: var(--sky);
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* CRT scanlines */
+  .frame-body::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.08) 3px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  /* Title bar */
+  .title-bar {
+    background: var(--oak2);
+    border-bottom: 4px solid var(--oak);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  .title-bar::after {
+    content: '';
+    position: absolute;
+    bottom: -8px; left: 0; right: 0;
+    height: 4px;
+    background: var(--oak3);
+  }
+
+  .title-gem {
+    width: 10px; height: 10px;
+    background: var(--blood);
+    box-shadow: 1px 1px 0 var(--ink), inset -1px -1px 0 rgba(0,0,0,0.5);
+    flex-shrink: 0;
+  }
+
+  .title-text {
+    font-size: 7px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 0 var(--ink);
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Content area */
+  .content {
+    padding: 20px 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Hero crest / pixel shield SVG */
+  .crest-wrap {
+    animation: float 2.8s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-4px); }
+  }
+
+  /* Main message */
+  .message-box {
+    background: rgba(0,0,0,0.35);
+    border: 2px solid var(--oak3);
+    padding: 12px 14px;
+    width: 100%;
+    position: relative;
+  }
+  .message-box::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px; bottom: -1px;
+    border: 1px solid var(--oak);
+    pointer-events: none;
+  }
+
+  .typewriter-text {
+    font-size: 7px;
+    color: var(--parchment);
+    line-height: 2;
+    min-height: 80px;
+    text-shadow: 1px 1px 0 var(--ink);
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 7px; height: 10px;
+    background: var(--gold);
+    animation: blink 0.7s step-end infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* Divider */
+  .divider {
+    width: 100%;
+    height: 4px;
+    background:
+      repeating-linear-gradient(90deg,
+        var(--oak3) 0px, var(--oak3) 4px,
+        var(--oak)  4px, var(--oak)  8px
+      );
+  }
+
+  /* Stats row */
+  .stats {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .stat-chip {
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--oak3);
+    padding: 5px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 6px;
+    color: var(--parch2);
+    flex: 1;
+  }
+  .stat-val {
+    font-size: 10px;
+    color: var(--gold);
+    text-shadow: 1px 1px 0 var(--ink);
+  }
+
+  /* The button */
+  .btn-wrap {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 4px;
+  }
+
+  .rpg-btn {
+    background: var(--oak2);
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    font-family: 'Press Start 2P', monospace;
+    animation: btnFloat 1.8s ease-in-out infinite;
+  }
+
+  @keyframes btnFloat {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+  }
+
+  .btn-top {
+    background: var(--oak3);
+    padding: 10px 28px;
+    font-size: 8px;
+    color: var(--cream);
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 var(--ink);
+    border: 3px solid var(--oak);
+    border-bottom: 0;
+    position: relative;
+    white-space: nowrap;
+    transition: background 0.08s, color 0.08s;
+  }
+  .btn-top::before {
+    content: '';
+    position: absolute;
+    top: 1px; left: 1px; right: 1px;
+    height: 2px;
+    background: rgba(255,255,255,0.15);
+  }
+
+  .btn-bottom {
+    height: 4px;
+    width: 100%;
+    background: var(--ink);
+    border: 3px solid var(--ink);
+    border-top: 0;
+  }
+
+  .rpg-btn:hover .btn-top {
+    background: var(--parch2);
+    color: var(--ink);
+    border-color: var(--gold2);
+  }
+  .rpg-btn:hover .btn-bottom {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+
+  .rpg-btn:active {
+    animation: none;
+    transform: translateY(3px) !important;
+  }
+  .rpg-btn:active .btn-bottom {
+    height: 1px;
+  }
+
+  /* Sword ornaments on button */
+  .btn-ornament {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    pointer-events: none;
+    line-height: 1;
+  }
+  .btn-ornament.left  { left: -22px; }
+  .btn-ornament.right { right: -22px; transform: translateY(-50%) scaleX(-1); }
+
+  /* Corner decorations on the popup frame */
+  .corner {
+    position: absolute;
+    width: 12px; height: 12px;
+    z-index: 5;
+  }
+  .corner svg { display: block; }
+  .corner.tl { top: -1px; left: -1px; }
+  .corner.tr { top: -1px; right: -1px; transform: scaleX(-1); }
+  .corner.bl { bottom: -1px; left: -1px; transform: scaleY(-1); }
+  .corner.br { bottom: -1px; right: -1px; transform: scale(-1); }
+
+  /* Flash layer */
+  .flash {
+    position: absolute; inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 20;
+    transition: opacity 0.05s;
+  }
+  .flash.active { opacity: 0.7; }
+</style>
+
+<div class="rpg-overlay">
+
+  <!-- Star field canvas -->
+  <canvas class="stars" id="stars"></canvas>
+
+  <div class="rpg-popup" id="popup">
+    <!-- Corner rivets -->
+    <div class="corner tl"><svg width="12" height="12"><rect x="0" y="0" width="8" height="8" fill="#7a4f2e"/><rect x="2" y="2" width="4" height="4" fill="#e8b84b"/></svg></div>
+    <div class="corner tr"><svg width="12" height="12"><rect x="0" y="0" width="8" height="8" fill="#7a4f2e"/><rect x="2" y="2" width="4" height="4" fill="#e8b84b"/></svg></div>
+    <div class="corner bl"><svg width="12" height="12"><rect x="0" y="0" width="8" height="8" fill="#7a4f2e"/><rect x="2" y="2" width="4" height="4" fill="#e8b84b"/></svg></div>
+    <div class="corner br"><svg width="12" height="12"><rect x="0" y="0" width="8" height="8" fill="#7a4f2e"/><rect x="2" y="2" width="4" height="4" fill="#e8b84b"/></svg></div>
+
+    <div class="frame-outer">
+      <div class="frame-inner">
+        <div class="frame-body">
+          <div class="flash" id="flash"></div>
+
+          <!-- Title bar -->
+          <div class="title-bar">
+            <div class="title-gem"></div>
+            <div class="title-text">✦ REINO DE PIXELORIA ✦</div>
+            <div class="title-gem"></div>
+          </div>
+
+          <div class="content">
+
+            <!-- Pixel shield crest -->
+            <div class="crest-wrap">
+              <svg width="80" height="88" viewBox="0 0 80 88" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated">
+                <!-- Shield base -->
+                <polygon points="8,4 72,4 72,56 40,84 8,56" fill="#2e1a0e"/>
+                <polygon points="12,8 68,8 68,54 40,79 12,54" fill="#7a1a1a"/>
+                <!-- Shield highlight -->
+                <polygon points="14,10 38,10 38,52 14,52" fill="#9e2222" opacity="0.5"/>
+                <!-- Cross -->
+                <rect x="36" y="12" width="8" height="48" fill="#e8b84b"/>
+                <rect x="18" y="30" width="44" height="8" fill="#e8b84b"/>
+                <!-- Cross center gem -->
+                <rect x="38" y="32" width="4" height="4" fill="#fff0a0"/>
+                <!-- Border rivet pixels -->
+                <rect x="8" y="4"  width="4" height="4" fill="#e8b84b"/>
+                <rect x="68" y="4" width="4" height="4" fill="#e8b84b"/>
+                <rect x="8" y="52" width="4" height="4" fill="#e8b84b"/>
+                <rect x="68" y="52" width="4" height="4" fill="#e8b84b"/>
+              </svg>
+            </div>
+
+            <!-- Typewriter message box -->
+            <div class="message-box">
+              <div class="typewriter-text" id="tw-text"><span class="cursor"></span></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Stats row -->
+            <div class="stats">
+              <div class="stat-chip">
+                <span class="stat-val">❤</span>
+                <span>VIDA</span>
+                <span class="stat-val">100</span>
+              </div>
+              <div class="stat-chip">
+                <span class="stat-val">⚔</span>
+                <span>FUERZA</span>
+                <span class="stat-val">15</span>
+              </div>
+              <div class="stat-chip">
+                <span class="stat-val">✦</span>
+                <span>MAGIA</span>
+                <span class="stat-val">08</span>
+              </div>
+              <div class="stat-chip">
+                <span class="stat-val">🛡</span>
+                <span>DEFENSA</span>
+                <span class="stat-val">12</span>
+              </div>
+            </div>
+
+            <!-- CTA button -->
+            <div class="btn-wrap">
+              <button class="rpg-btn" id="adv-btn" onclick="onAdventure()">
+                <span class="btn-ornament left">⚔</span>
+                <div class="btn-top">¡A LA AVENTURA!</div>
+                <div class="btn-bottom"></div>
+                <span class="btn-ornament right">⚔</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Stars ──────────────────────────────────────────────────────────────
+  (function() {
+    const c = document.getElementById('stars');
+    const p = c.parentElement;
+    c.width = p.offsetWidth || 440;
+    c.height = p.offsetHeight || 520;
+    const ctx = c.getContext('2d');
+    const colors = ['#ffffff','#e8dcac','#8888cc','#aaaaff'];
+    for (let i = 0; i < 180; i++) {
+      ctx.fillStyle = colors[Math.random()*colors.length|0];
+      ctx.globalAlpha = Math.random() * 0.7 + 0.2;
+      ctx.fillRect(
+        Math.random() * c.width | 0,
+        Math.random() * c.height | 0,
+        1, 1
+      );
+    }
+    ctx.globalAlpha = 1;
+  })();
+
+  // ── Typewriter ─────────────────────────────────────────────────────────
+  const lines = [
+    'Viajero, bienvenido a las',
+    'tierras de Pixeloria.',
+    '',
+    'El destino del reino',
+    'descansa en tus manos.',
+    '',
+    '¿Estás listo, héroe?'
+  ];
+  const fullText = lines.join('\n');
+  let idx = 0;
+  const el = document.getElementById('tw-text');
+
+  function tick() {
+    if (idx > fullText.length) return;
+    const slice = fullText.slice(0, idx);
+    el.innerHTML = slice.replace(/\n/g, '<br>') + '<span class="cursor"></span>';
+    idx++;
+    setTimeout(tick, idx < fullText.length ? 38 : 0);
+  }
+  setTimeout(tick, 900);
+
+  // ── Button click ───────────────────────────────────────────────────────
+  function onAdventure() {
+    const fl = document.getElementById('flash');
+    fl.classList.add('active');
+    setTimeout(() => fl.classList.remove('active'), 120);
+
+    const popup = document.getElementById('popup');
+    popup.style.transition = 'transform 0.5s cubic-bezier(0.6,0,0.8,0), opacity 0.45s';
+    popup.style.transform = 'translateY(-80px) scale(0.92)';
+    popup.style.opacity = '0';
+
+    setTimeout(() => {
+      popup.style.transition = '';
+      popup.style.transform = '';
+      popup.style.opacity = '';
+      popup.style.animation = 'none';
+      void popup.offsetWidth;
+      popup.style.animation = '';
+      popup.style.animation = 'popDrop 0.7s cubic-bezier(0.22,1,0.36,1) both';
+      idx = 0;
+      el.innerHTML = '<span class="cursor"></span>';
+      setTimeout(tick, 300);
+    }, 650);
+  }
+</script>
