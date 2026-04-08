@@ -253,9 +253,6 @@ class GameScene extends Phaser.Scene {
     fountain.body.setOffset(4, 4);
     fountain.anims.play("fountain_anim", true);
 
-    // --- PORTAL MÁGICO (Enlace a Web Principal) ---
-    this.createPortal(worldSize.width / 2 - 250 + 180, worldSize.height / 2 - 300);
-
     // --- ANIMACIONES DEL JUGADOR ---
     // 4 direcciones de caminata, cada una con 4 frames a 8fps en bucle
     this.anims.create({
@@ -366,6 +363,9 @@ class GameScene extends Phaser.Scene {
     this.createSkillsZone();
     this.createHouse();
     this.createMailbox();
+    
+    // --- PORTAL MÁGICO (Al lado de la fuente) ---
+    this.createPortal(worldSize.width / 2 - 250 + 180, worldSize.height / 2 - 300);
 
     // Evento keyup: detener animación del jugador al soltar teclas
     this.input.keyboard.on("keyup", () => {
@@ -1869,59 +1869,7 @@ class GameScene extends Phaser.Scene {
    * Cada habilidad tiene un icono pixelado animado sobre un estandarte medieval.
    * Al acercarse, muestra información sobre la tecnología.
    */
-  // ═══════════════════════════════════════════════════════
-  // SISTEMA DE GALERÍA DE PROYECTOS (ANIME) EXTERIOR
-  // ═══════════════════════════════════════════════════════
 
-  /**
-   * Crea personajes interactivos en la zona izquierda. 
-   * Representan los "proyectos" originales.
-   */
-  createAnimeGallery() {
-    const leftSideX = 50, startY = 200;
-
-    const characters = [
-      { name: "goku", title: "Proyecto A", description: "Portfolio con Phaser.js", frames: 3, scale: 0.34, x: 60, y: -100, flipX: true },
-      { name: "itachi", title: "Proyecto B", description: "API REST frontend", frames: 8, scale: 1.6, x: 0, y: 100, flipX: false },
-      { name: "kakashi", title: "Proyecto C", description: "Interacciones", frames: 23, scale: 0.5, x: 120, y: 50, flipX: true },
-      { name: "link", title: "Proyecto D", description: "Web UI/UX", frames: 18, scale: 0.4, x: 60, y: 300, flipX: false },
-      { name: "sasuke", title: "Proyecto E", description: "Colisiones físicas", frames: 4, scale: 2, x: 120, y: 170, flipX: true }
-    ];
-
-    characters.forEach((char) => {
-      // Usamos el origen relativo de animeGallery para colocarlos a la izquierda
-      const sprite = this.physics.add
-        .sprite(leftSideX + char.x, startY + char.y, char.name)
-        .setOrigin(0.5)
-        .setScale(char.scale)
-        .setDepth(2)
-        .setImmovable(true);
-
-      sprite.flipX = char.flipX;
-
-      if (!this.anims.exists(`${char.name}_anim`)) {
-        this.anims.create({
-          key: `${char.name}_anim`,
-          frames: this.anims.generateFrameNumbers(char.name, { start: 0, end: char.frames }),
-          frameRate: 6, repeat: -1,
-        });
-      }
-      sprite.play(`${char.name}_anim`, true);
-
-      // Zona de interacción reutilizando SignData para abrir el Dialog
-      const interactionZone = this.add.zone(
-        sprite.x, sprite.y + (sprite.height * char.scale) / 2 + 10, 40, 40
-      );
-      this.physics.world.enable(interactionZone);
-      interactionZone.body.setAllowGravity(false);
-      interactionZone.body.setImmovable(true);
-      // Falsificamos un SignEntity para abusar del showRPGDialog
-      interactionZone.signData = { name: char.title, description: char.description }; 
-
-      // Usaremos la misma lógica de los carteles
-      this.physics.add.overlap(this.player, interactionZone, this.onSignProximity, null, this);
-    });
-  }
 
   createSkillsZone() {
     // Generar las texturas de habilidades
